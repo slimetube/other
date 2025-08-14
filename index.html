@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>other stuff</title>
+<style>
+  body { font-family: sans-serif; max-width: 800px; margin: auto; }
+  img, video { max-width: 100%; margin: 1em 0; display: block; }
+</style>
+</head>
+<body>
+<h1>other stuff</h1>
+<div id="content">Loading...</div>
+
+<script>
+const owner = "slimetube";
+const repo = "other";
+const branch = "main";
+
+const imgExt = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.bmp'];
+const vidExt = ['.mp4', '.webm', '.ogg', '.mov', '.avi'];
+
+function isMedia(file) {
+  const ext = file.slice(file.lastIndexOf('.')).toLowerCase();
+  return imgExt.includes(ext) || vidExt.includes(ext);
+}
+
+async function loadFiles() {
+  try {
+    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`);
+    const data = await res.json();
+    const files = data.tree.filter(item => item.type === "blob" && isMedia(item.path));
+    
+    const container = document.getElementById("content");
+    container.innerHTML = "";
+
+    for (const file of files) {
+      const fileUrl = `https://slimetube.github.io/${repo}/${file.path}`;
+      const filename = file.path.split('/').pop();
+      const ext = filename.slice(filename.lastIndexOf('.')).toLowerCase();
+
+      if (vidExt.includes(ext)) {
+        const video = document.createElement("video");
+        video.src = fileUrl;
+        video.controls = true;
+        video.title = filename;
+        container.appendChild(video);
+      } else {
+        const img = document.createElement("img");
+        img.src = fileUrl;
+        img.alt = filename;
+        container.appendChild(img);
+      }
+    }
+  } catch (e) {
+    document.getElementById("content").textContent = "Error loading files.";
+    console.error(e);
+  }
+}
+
+loadFiles();
+</script>
+</body>
+</html>
